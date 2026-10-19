@@ -1,0 +1,412 @@
+/* Visual language follows GeoQuiz / Anatomy Quiz (reference/): the same
+   dark palette, button styles and menu screens, with the same class names
+   where a rule exists in both, so the stylesheets can be compared. */
+
+:root {
+  --bg: #10141c;
+  --surface: #1a2030;
+  --surface-raised: #232b40;
+  --text: #e8ecf4;
+  --text-dim: #9aa4bd;
+  --accent: #4f8cff;
+  --accent-dim: #2c3f66;
+  --border: #2c3450;
+  /* The stage behind the cat. */
+  --stage: #0a0e16;
+  /* Piano keys. */
+  --key-white: #eef0f5;
+  --key-white-down: #b9cdf7;
+  --key-black: #1b1f2a;
+  --key-black-down: #3a5ca8;
+  /* The cat. */
+  --cat-fur: #d9d4cc;
+  --cat-stripe: #8c8479;
+  --cat-ear-inner: #e8a7a7;
+  --cat-muzzle: #f4f1ec;
+  --cat-dark: #1e1b18;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* `display: flex` etc. on a class would otherwise beat the hidden attribute. */
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Hard viewport cap — the page itself never scrolls (a fixed root gives
+   mobile browsers no page scroll to react to). Long menus scroll
+   internally. */
+#app {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6em 1.2em;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---------- Menu screens (home, settings, help) ---------- */
+
+.menu-screen {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.menu-screen h1 {
+  text-align: center;
+  margin: 0;
+}
+
+.menu-step h2 {
+  font-size: 1.05rem;
+  color: var(--text-dim);
+  margin: 0 0 0.75rem;
+  text-align: center;
+}
+
+.menu-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+/* One button under the other, all the same width, centred. */
+.menu-screen .menu-options {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: min(22rem, 100%);
+  margin: 0 auto;
+}
+
+.menu-option--selected {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+
+.wizard-back {
+  align-self: flex-start;
+  font-size: 0.9rem;
+  padding: 0.4em 0.9em;
+}
+
+.wizard-subtitle {
+  text-align: center;
+  color: var(--text-dim);
+  margin: -1rem 0 0;
+}
+
+.wizard-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: 8rem;
+}
+
+.wizard-option-desc {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.help-section h2 {
+  font-size: 1.05rem;
+  color: var(--text);
+  margin: 0 0 0.4rem;
+}
+
+.help-section p {
+  margin: 0;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.home-cat {
+  width: 7rem;
+  margin: 0 auto -0.75rem;
+}
+
+/* ---------- The cat (ui/cat.js) ---------- */
+
+.cat {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.cat-ear,
+.cat-head {
+  fill: var(--cat-fur);
+}
+
+.cat-ear-inner {
+  fill: var(--cat-ear-inner);
+}
+
+.cat-stripe {
+  fill: var(--cat-stripe);
+}
+
+.cat-muzzle {
+  fill: var(--cat-muzzle);
+}
+
+.cat-eye,
+.cat-mouth {
+  fill: var(--cat-dark);
+}
+
+.cat-nose {
+  fill: var(--cat-ear-inner);
+}
+
+.cat-glint {
+  fill: #fff;
+}
+
+.cat-whisker {
+  stroke: var(--text-dim);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  fill: none;
+}
+
+/* The mouth only opens while singing. */
+.cat-mouth {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(1, 0.25);
+  transition: transform 0.08s;
+}
+
+/* ---------- Play screen (ui/keyboard.js) ---------- */
+
+.play-screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.play-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.octave-control {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.octave-button {
+  padding: 0.2em 0.8em;
+  font-size: 1.1rem;
+  line-height: 1.2;
+}
+
+.octave-label {
+  min-width: 2.5em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: radial-gradient(ellipse at center, var(--surface) 0%, var(--stage) 70%);
+}
+
+.stage-cat {
+  width: min(16rem, 45vmin);
+  perspective: 600px;
+}
+
+/* Spins around its vertical axis, like the cat on the turntable. */
+.stage-cat--spinning .cat {
+  animation: cat-spin 0.45s linear infinite;
+}
+
+.stage-cat--spinning .cat-mouth {
+  transform: scale(1, 1);
+}
+
+@keyframes cat-spin {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
+.float-word {
+  position: absolute;
+  bottom: 8%;
+  transform: translateX(-50%);
+  font-weight: 700;
+  font-size: 1.4rem;
+  letter-spacing: 0.05em;
+  color: var(--accent);
+  pointer-events: none;
+  animation: float-up 1.1s ease-out forwards;
+}
+
+@keyframes float-up {
+  from {
+    opacity: 1;
+    translate: 0 0;
+  }
+  to {
+    opacity: 0;
+    translate: 0 -12rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-cat--spinning .cat {
+    animation: none;
+  }
+  .float-word {
+    animation-duration: 0.6s;
+    animation-name: fade-out;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+.keyboard {
+  --whites: 10;
+  position: relative;
+  display: flex;
+  height: clamp(9rem, 32vh, 15rem);
+  padding: 0 0.5rem 0.5rem;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  /* Slides across the keys must not scroll or zoom the page. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.key {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.2rem;
+  padding-bottom: 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.key--white {
+  flex: 1;
+  background: var(--key-white);
+  color: #4a5068;
+  border: 1px solid #b7bccb;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+}
+
+.key--white.key--down {
+  background: var(--key-white-down);
+}
+
+/* Black keys sit on the line between two white keys; keyboard.js sets
+   `left` to that line (offset by .keyboard's 0.5rem side padding), the
+   transform centres them on it. */
+.key--black {
+  position: absolute;
+  top: 0;
+  z-index: 1;
+  width: calc((100% - 1rem) / var(--whites) * 0.6);
+  height: 60%;
+  transform: translateX(-50%);
+  background: var(--key-black);
+  color: var(--text-dim);
+  border-radius: 0 0 5px 5px;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.5);
+}
+
+.key--black.key--down {
+  background: var(--key-black-down);
+  color: var(--text);
+}
+
+.key-note {
+  font-size: 0.7rem;
+  opacity: 0.75;
+}
+
+.key-letter {
+  font-weight: 700;
+}
+
+@media (max-width: 520px) {
+  .menu-screen {
+    padding: 2rem 1rem;
+  }
+  .key {
+    font-size: 0.65rem;
+    padding-bottom: 0.4rem;
+  }
+}

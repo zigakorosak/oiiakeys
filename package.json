@@ -1,0 +1,16 @@
+{
+  "name": "oiiakeys",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "archive": "bash scripts/archive.sh"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0",
+    "vite": "^8.3.3"
+  }
+}

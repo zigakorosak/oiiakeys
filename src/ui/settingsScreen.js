@@ -1,0 +1,60 @@
+// Settings, reachable from home (GeoQuiz's settingsScreen.js): one section
+// per preference, each a column of options with the current one selected.
+// Saved on click (core/settings.js).
+
+import { loadSettings, saveSettings } from "../core/settings.js";
+import { h } from "./dom.js";
+
+const sections = [
+  {
+    title: "Sound",
+    key: "syllable",
+    options: [
+      { label: "Full “oiia”", value: "oiia" },
+      { label: "Short “oi” (for fast runs)", value: "oi" },
+    ],
+  },
+  {
+    title: "Key letters",
+    key: "showKeyLabels",
+    options: [
+      { label: "Show", value: true },
+      { label: "Hide", value: false },
+    ],
+  },
+  {
+    title: "Note names",
+    key: "showNoteNames",
+    options: [
+      { label: "Show", value: true },
+      { label: "Hide", value: false },
+    ],
+  },
+];
+
+export function renderSettings(root, navigate) {
+  const settings = loadSettings();
+  const section = ({ title, key, options }) => {
+    const buttons = options.map((option) => {
+      const btn = h("button.menu-option", { type: "button" }, option.label);
+      if (option.value === settings[key]) btn.classList.add("menu-option--selected");
+      btn.addEventListener("click", () => {
+        for (const b of buttons) b.classList.remove("menu-option--selected");
+        btn.classList.add("menu-option--selected");
+        settings[key] = option.value;
+        saveSettings(settings);
+      });
+      return btn;
+    });
+    return h("section.menu-step", {}, h("h2", {}, title), h("div.menu-options", {}, buttons));
+  };
+  root.append(
+    h(
+      "div.menu-screen.wizard-screen",
+      {},
+      h("button.wizard-back", { type: "button", onclick: () => navigate("home") }, "← Back"),
+      h("h1", {}, "Settings"),
+      sections.map(section),
+    ),
+  );
+}
