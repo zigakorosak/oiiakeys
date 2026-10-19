@@ -1,10 +1,10 @@
-// The "oiia" voice: every note is sung as o-i-i-a, like the spinning cat.
+// The "oiia" voice. Each key press sings one vowel of o-i-a (the
+// keyboard screen picks which), held for as long as the key is.
 //
 // Synthesized, not sampled: a sawtooth (the "vocal cords") through three
 // parallel band-pass filters (the formants that make a vowel sound like
-// that vowel). Sliding the formants o → i → i → a over ~0.7 s, with a
-// dip between the two i's, is what makes it say "oiia". See DESIGN.md
-// "Voice" for the numbers and why they are what they are.
+// that vowel). See DESIGN.md "Voice" for the numbers and why they are
+// what they are.
 
 // Formant centres (F1, F2, F3) in Hz for an adult voice, then scaled up:
 // a smaller vocal tract sounds more like a cartoon cat than a person.
@@ -21,43 +21,17 @@ const FORMANT_GAIN = [1, 0.6, 0.3]; // higher formants are quieter
 // (measured on A4 with an offline render, see LOG.md).
 const VOWEL_LEVEL = { o: 2.2, i: 1, a: 1.8 };
 
-// A syllable is a list of points, ramped linearly between:
-//   t: seconds after the note starts
-//   v: vowel at that point
-//   p: pitch offset in semitones from the played note
-//   g: loudness, 0..1
-// The long "ii" sits at p = 0, so the note sounds in tune; the "o" slides
-// up into it and the "a" falls away, which is the meme's contour.
-const SYLLABLES = {
-  oiia: [
-    { t: 0, v: "o", p: -3, g: 0 },
-    { t: 0.03, v: "o", p: -2, g: 1 },
-    { t: 0.12, v: "o", p: -1, g: 1 },
-    { t: 0.17, v: "i", p: 0, g: 1 },
-    { t: 0.26, v: "i", p: 0, g: 0.95 },
-    { t: 0.29, v: "i", p: -0.5, g: 0.3 }, // the break between "i" and "i"
-    { t: 0.32, v: "i", p: 0, g: 1 },
-    { t: 0.42, v: "i", p: 0, g: 1 },
-    { t: 0.5, v: "a", p: -0.5, g: 1 },
-    { t: 0.62, v: "a", p: -2, g: 0.7 },
-    { t: 0.75, v: "a", p: -4, g: 0 },
-  ],
-  oi: [
-    { t: 0, v: "o", p: -3, g: 0 },
-    { t: 0.02, v: "o", p: -2, g: 1 },
-    { t: 0.08, v: "o", p: -1, g: 1 },
-    { t: 0.12, v: "i", p: 0, g: 1 },
-    { t: 0.24, v: "i", p: 0, g: 0.8 },
-    { t: 0.32, v: "i", p: -1, g: 0 },
-  ],
-};
+/** The order presses cycle through. */
+export const VOWEL_SEQUENCE = ["o", "i", "a"];
 
+const ATTACK = 0.02; // s to full loudness
+const SCOOP = 0.06; // s to slide up into the note…
+const SCOOP_FROM = -1; // …from this many semitones below
+const RELEASE = 0.12; // s to fade out after the key is let go
 const VIBRATO_RATE = 6; // Hz
 const VIBRATO_DEPTH = 0.012; // fraction of the note's frequency
+const VIBRATO_DELAY = 0.15; // s of plain tone before the vibrato fades in
 const MASTER_GAIN = 0.35;
-
-/** Seconds a syllable lasts (the spinning cat uses it too). */
-export const syllableLength = (syllable) => SYLLABLES[syllable].at(-1).t;
 
 export function createVoice() {
   let ctx = null;
@@ -81,52 +55,62 @@ export function createVoice() {
     return ctx;
   }
 
-  /** Sing one "oiia" at `freq` Hz. */
-  function play(freq, syllable = "oiia") {
+  /**
+   * Start singing `vowel` at `freq` Hz. Returns stop(), which fades it out;
+   * until then it sustains.
+   */
+  function start(freq, vowel) {
     const audio = ensureContext();
-    const points = SYLLABLES[syllable] ?? SYLLABLES.oiia;
-    const start = audio.currentTime + 0.005;
-    const end = start + points.at(-1).t;
+    const now = audio.currentTime + 0.005;
 
     const source = audio.createOscillator();
     source.type = "sawtooth";
+    source.frequency.setValueAtTime(freq * 2 ** (SCOOP_FROM / 12), now);
+    source.frequency.linearRampToValueAtTime(freq, now + SCOOP);
 
     const vibrato = audio.createOscillator();
     vibrato.frequency.value = VIBRATO_RATE;
     const vibratoDepth = audio.createGain();
-    vibratoDepth.gain.value = freq * VIBRATO_DEPTH;
+    vibratoDepth.gain.setValueAtTime(0, now + VIBRATO_DELAY);
+    vibratoDepth.gain.linearRampToValueAtTime(freq * VIBRATO_DEPTH, now + VIBRATO_DELAY + 0.3);
     vibrato.connect(vibratoDepth).connect(source.frequency);
 
     const envelope = audio.createGain();
+    envelope.gain.setValueAtTime(0, now);
+    envelope.gain.linearRampToValueAtTime(VOWEL_LEVEL[vowel], now + ATTACK);
     envelope.connect(output);
 
-    const formants = FORMANT_BANDWIDTH.map((bandwidth, i) => {
+    VOWELS[vowel].forEach((formant, i) => {
+      const centre = formant * FORMANT_SCALE;
       const filter = audio.createBiquadFilter();
       filter.type = "bandpass";
+      filter.frequency.value = centre;
+      filter.Q.value = centre / FORMANT_BANDWIDTH[i];
       const level = audio.createGain();
       level.gain.value = FORMANT_GAIN[i];
       source.connect(filter).connect(level).connect(envelope);
-      return { filter, bandwidth };
     });
 
-    for (const [n, point] of points.entries()) {
-      const at = start + point.t;
-      const ramp = n === 0 ? "setValueAtTime" : "linearRampToValueAtTime";
-      source.frequency[ramp](freq * 2 ** (point.p / 12), at);
-      envelope.gain[ramp](point.g * VOWEL_LEVEL[point.v], at);
-      formants.forEach(({ filter, bandwidth }, i) => {
-        const centre = VOWELS[point.v][i] * FORMANT_SCALE;
-        filter.frequency[ramp](centre, at);
-        filter.Q[ramp](centre / bandwidth, at);
-      });
-    }
-
-    source.start(start);
-    vibrato.start(start);
-    source.stop(end + 0.05);
-    vibrato.stop(end + 0.05);
+    source.start(now);
+    vibrato.start(now);
     source.onended = () => envelope.disconnect();
+
+    let stopped = false;
+    return function stop() {
+      if (stopped) return;
+      stopped = true;
+      // Fade from wherever the attack got to. Worked out here rather than
+      // read from gain.value, which Firefox doesn't keep up to date with
+      // scheduled ramps.
+      const at = Math.max(audio.currentTime, now);
+      const level = VOWEL_LEVEL[vowel] * Math.min(1, (at - now) / ATTACK);
+      envelope.gain.cancelScheduledValues(at);
+      envelope.gain.setValueAtTime(level, at);
+      envelope.gain.linearRampToValueAtTime(0, at + RELEASE);
+      source.stop(at + RELEASE + 0.02);
+      vibrato.stop(at + RELEASE + 0.02);
+    };
   }
 
-  return { play };
+  return { start };
 }

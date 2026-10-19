@@ -2,8 +2,9 @@
 
 ## Goal
 
-A browser keyboard where every note sounds like the "oiia" spinning-cat
-meme: press a key, hear "oiia" at that pitch, watch the cat spin. Small,
+A browser keyboard where the notes sound like the "oiia" spinning-cat
+meme: each press sings the next sound of o-i-a at that key's pitch,
+held as long as the key is, while the cat spins. Small,
 fast to load, works with mouse, touch and the computer keyboard.
 
 ## Tech stack
@@ -24,7 +25,7 @@ src/
     notes.js        — on-screen keys per octave, KeyboardEvent.code mapping, key labels, midi → Hz
     settings.js     — persistent preferences (localStorage), GeoQuiz's settings.js
   audio/
-    oiiaVoice.js    — formant synthesizer: one "oiia" per note
+    oiiaVoice.js    — formant synthesizer: one sustained vowel (o, i or a) per note
   ui/
     dom.js          — h() element helper (copied from Anatomy Quiz)
     screenKit.js    — shared full-screen "pick one of these" component
@@ -41,24 +42,30 @@ src/
 Synthesized, so there's no meme audio file to license or ship. Classic
 source–filter vowel synthesis:
 
-- **Source**: a sawtooth at the note's frequency, with a 6 Hz vibrato of
-  ±1.2%.
+- **Source**: a sawtooth at the note's frequency. It scoops up from −1
+  semitone over 60 ms, and a 6 Hz vibrato of ±1.2% fades in after 0.15 s.
 - **Filter**: three parallel band-pass filters at the vowel's formants
   F1–F3 (gains 1, 0.6, 0.3; bandwidths 80/100/140 Hz). Adult formant
   values for o, i, a, scaled ×1.25 for a smaller, cattier vocal tract.
-- **Syllable**: a list of points `{t, vowel, pitch offset, loudness}`
-  ramped linearly. The long "ii" sits at the note's pitch (offset 0), so
-  the note sounds in tune; the "o" slides up into it from −3 semitones and
-  the "a" falls to −4. A loudness dip at 0.29 s splits "ii" into "i-i".
-  "oiia" lasts 0.75 s; "oi" (a setting) 0.32 s.
+- **One vowel per press**, sustained until `stop()`: 20 ms attack, then
+  held; `stop()` fades out over 0.12 s. The fade starts from a level
+  computed from the attack's progress, not read from `gain.value`, which
+  Firefox doesn't update during scheduled ramps.
 - **Vowel loudness**: narrow formants pass fewer of the sawtooth's
   harmonics on "o" and "a" than on "i", so those were ~2× quieter. Each
-  vowel's envelope is multiplied by `VOWEL_LEVEL` (o 2.2, i 1, a 1.8).
+  vowel's level is `VOWEL_LEVEL` (o 2.2, i 1, a 1.8).
 - **Output**: master gain 0.35 → a compressor (−12 dB, 8:1) so chords
   don't clip.
-- One-shot per press, like a sample: holding a key doesn't sustain it.
 - The AudioContext is created on the first note (it must be in a user
   gesture) and shared across screens.
+
+### Vowel cycle (`ui/keyboard.js`)
+
+Presses step through `VOWEL_SEQUENCE` = o, i, a, then start over,
+shared by all inputs. A press on the same
+key as the previous press repeats that vowel instead of stepping on.
+A glide counts each new key as a press. The cycle starts at "o" each
+time the play screen opens.
 
 ### Keyboard (`ui/keyboard.js`, `core/notes.js`)
 
@@ -67,7 +74,7 @@ source–filter vowel synthesis:
   the line between two white keys (`left` set in JS, centred by
   `translateX(-50%)`).
 - **Held state** is a map from source (`pointer:<id>` or a key code) to
-  the midi note it holds, so multi-touch, chords and mixed mouse+keys all
+  the note it holds and that note's `stop()`, so multi-touch, chords and mixed mouse+keys all
   light up correctly. Window blur releases everything (no keyup comes
   after alt-tab).
 - **Pointer**: capture on the keyboard; on move, `elementFromPoint` finds
@@ -76,15 +83,13 @@ source–filter vowel synthesis:
 - **Computer keys** by `KeyboardEvent.code` (physical position). Labels
   come from `navigator.keyboard.getLayoutMap()` where available
   (Chromium); Firefox falls back to QWERTY letters.
-- **Cat**: spins (`rotateY`, 0.45 s per turn) while the count of
-  still-sounding syllables is above zero; the mouth opens while spinning.
+- **Cat**: spins (`rotateY`, 0.45 s per turn) while any key is held; the mouth opens while spinning.
   `prefers-reduced-motion` turns the spin off.
 
 ## Possible next steps
 
 - Sample mode: drop in a recorded "oiia" and pitch-shift it per note
   (`playbackRate`), as an alternative to the synth.
-- Sustain while held (loop the "ii") instead of one-shot.
 - Record and play back a tune; a few preset songs.
 
 ## Project conventions

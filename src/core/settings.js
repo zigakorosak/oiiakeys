@@ -9,8 +9,6 @@ const defaults = {
   showKeyLabels: true,
   // Show note names (C4, F♯4, …) on the keys.
   showNoteNames: false,
-  // "oiia": the full o-i-i-a per note. "oi": a short o-i, for fast runs.
-  syllable: "oiia",
   // Lowest C on screen.
   octave: 4,
 };

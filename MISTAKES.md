@@ -68,3 +68,9 @@ building observation tooling, not another fix.
   are offset by `.keyboard`'s side padding for this reason.
 - **Playwright `getByText("Play")` also matches "How to play".** Use
   `getByRole("button", { name: "Play", exact: true })`.
+- **Don't read `AudioParam.value` to find where a ramp has got to.**
+  Firefox doesn't keep it up to date with scheduled automation; compute
+  the level from the schedule instead.
+- **Firefox has no `OfflineAudioContext.suspend()`.** To test a release
+  offline, override the context's `currentTime` getter, call `stop()`
+  before `startRendering()`, and the stop is scheduled at that time.

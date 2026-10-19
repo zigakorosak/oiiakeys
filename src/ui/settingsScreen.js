@@ -7,14 +7,6 @@ import { h } from "./dom.js";
 
 const sections = [
   {
-    title: "Sound",
-    key: "syllable",
-    options: [
-      { label: "Full “oiia”", value: "oiia" },
-      { label: "Short “oi” (for fast runs)", value: "oi" },
-    ],
-  },
-  {
     title: "Key letters",
     key: "showKeyLabels",
     options: [

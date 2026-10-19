@@ -6,7 +6,7 @@ import { h } from "./dom.js";
 const sections = [
   {
     title: "Playing",
-    text: "Click or tap a key, or slide across the keys to glide. Every note is one “oiia”, sung at that pitch. Chords work too.",
+    text: "Each new key sings the next sound of “o-i-a”, round and round. Pressing the same key again repeats its sound; holding a key holds the sound. Slide across the keys to glide; chords work too.",
   },
   {
     title: "Computer keyboard",
@@ -14,7 +14,7 @@ const sections = [
   },
   {
     title: "Settings",
-    text: "Show or hide key letters and note names, and switch between the full “oiia” and a short “oi” for fast runs.",
+    text: "Show or hide key letters and note names.",
   },
 ];
 

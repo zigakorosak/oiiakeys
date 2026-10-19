@@ -1,7 +1,7 @@
 # OIIA Keys
 
-A browser keyboard where every note is the spinning cat: press a key and
-it sings "oiia" at that pitch, while the cat spins.
+A browser keyboard where every note is the spinning cat: each key press
+sings the next sound of "o-i-a" at that pitch, while the cat spins.
 
 Planned for [zigakorosak.com/oiiakeys](https://zigakorosak.com/oiiakeys/)
 (not deployed yet, see "Deployment").
@@ -11,16 +11,16 @@ Planned for [zigakorosak.com/oiiakeys](https://zigakorosak.com/oiiakeys/)
 - A 17-key piano (C to E, an octave and a third), playable by mouse,
   touch, or the computer keyboard. Chords work; slide across the keys to
   glide.
-- **Every note is one "oiia"**, synthesized live (no audio files): the
-  long "ii" sits on the note's pitch, the "o" slides up into it and the
-  "a" falls away.
-- The cat spins (and opens its mouth) while any note is sounding; each
-  note sends a floating "oiia" up from where its key is.
+- **Presses cycle o → i → a**, round and round. Pressing
+  the same key again repeats its sound. Holding a key holds the sound.
+  Synthesized live (no audio files).
+- The cat spins (and opens its mouth) while any key is held; each press
+  sends its letter floating up from where its key is.
 - **Computer keyboard**: home row = white keys, row above = black keys,
   Z / X = octave down / up (octaves 1–6). Matched by physical key, so the
   shape is the same on QWERTY, QWERTZ and AZERTY.
-- **Settings**: full "oiia" or short "oi" (for fast runs), key letters
-  on/off, note names on/off. Saved in the browser.
+- **Settings**: key letters on/off, note names on/off. Saved in the
+  browser.
 - **How to play** page on the home screen.
 
 ## Tech stack

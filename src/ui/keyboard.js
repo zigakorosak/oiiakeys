@@ -12,7 +12,7 @@ import {
   MAX_OCTAVE,
 } from "../core/notes.js";
 import { loadSettings, saveSettings } from "../core/settings.js";
-import { createVoice, syllableLength } from "../audio/oiiaVoice.js";
+import { createVoice, VOWEL_SEQUENCE } from "../audio/oiiaVoice.js";
 import { catFace } from "./cat.js";
 import { h } from "./dom.js";
 
@@ -91,53 +91,54 @@ export function renderKeyboard(root, navigate) {
 
   // ---------- Sounding a note ----------
 
-  // Held keys, by source ("pointer:<id>" or a key code) → midi, so a key
-  // only lights up while something is holding it.
+  // Held keys, by source ("pointer:<id>" or a key code) → { midi, stop },
+  // so a key sounds and lights up exactly while something is holding it.
   const held = new Map();
-  let sounding = 0;
-  const timers = new Set();
+
+  // Each press sings the next vowel of o-i-a, except pressing the same
+  // key as last time, which repeats its vowel.
+  let step = -1;
+  let lastMidi = null;
+  function nextVowel(midi) {
+    if (midi !== lastMidi) step = (step + 1) % VOWEL_SEQUENCE.length;
+    lastMidi = midi;
+    return VOWEL_SEQUENCE[step];
+  }
 
   function refreshHeld() {
-    const down = new Set(held.values());
+    const down = new Set([...held.values()].map((note) => note.midi));
     for (const [midi, el] of keyEls) el.classList.toggle("key--down", down.has(midi));
+    // The cat spins while anything is being sung.
+    cat.classList.toggle("stage-cat--spinning", held.size > 0);
   }
 
   function press(source, midi) {
-    if (held.get(source) === midi) return;
-    held.set(source, midi);
+    if (held.get(source)?.midi === midi) return;
+    held.get(source)?.stop();
+    const vowel = nextVowel(midi);
+    held.set(source, { midi, stop: voice.start(frequency(midi), vowel) });
     refreshHeld();
-    sing(midi);
+    floatWord(keys.find((k) => k.midi === midi), vowel);
   }
 
   function release(source) {
-    if (held.delete(source)) refreshHeld();
+    const note = held.get(source);
+    if (!note) return;
+    note.stop();
+    held.delete(source);
+    refreshHeld();
   }
 
   function releaseAll() {
+    for (const note of held.values()) note.stop();
     held.clear();
     refreshHeld();
   }
 
-  function sing(midi) {
-    voice.play(frequency(midi), settings.syllable);
-    const key = keys.find((k) => k.midi === midi);
-    floatWord(key);
-
-    // The cat spins while at least one "oiia" is still sounding.
-    sounding++;
-    cat.classList.add("stage-cat--spinning");
-    const timer = setTimeout(() => {
-      timers.delete(timer);
-      if (--sounding === 0) cat.classList.remove("stage-cat--spinning");
-    }, syllableLength(settings.syllable) * 1000);
-    timers.add(timer);
-  }
-
-  // A floating "oiia" above the cat, drifting up from roughly where the key
-  // is on the keyboard.
-  function floatWord(key) {
+  // The sung vowel, floating up above roughly where its key is.
+  function floatWord(key, vowel) {
     const index = keys.indexOf(key);
-    const word = h("span.float-word", {}, settings.syllable);
+    const word = h("span.float-word", {}, vowel);
     word.style.left = `${8 + (index / (keys.length - 1)) * 84}%`;
     word.addEventListener("animationend", () => word.remove());
     stage.append(word);
@@ -197,6 +198,6 @@ export function renderKeyboard(root, navigate) {
     document.removeEventListener("keydown", onKeyDown);
     document.removeEventListener("keyup", onKeyUp);
     window.removeEventListener("blur", onBlur);
-    for (const t of timers) clearTimeout(t);
+    releaseAll();
   };
 }
