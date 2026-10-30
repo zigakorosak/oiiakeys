@@ -113,8 +113,9 @@ time the play screen opens.
 
 Target: `zigakorosak.com/oiiakeys/` on Namecheap shared hosting (cPanel),
 the same host as GeoQuiz and Anatomy Quiz. `.github/workflows/deploy.yml`
-builds on GitHub's runner and FTPS-uploads `dist/`. It is **manual only**
-(`workflow_dispatch`).
+builds on GitHub's runner and FTPS-uploads `dist/`. It runs on every
+push to `main` (except `.md`-only pushes), or by hand from the Actions
+tab or with `gh workflow run "Deploy to Namecheap"`.
 
 `vite.config.js` sets `base: "/oiiakeys/"`. If the deploy path changes,
 that line must change to match.

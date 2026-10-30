@@ -2,6 +2,18 @@
 
 Newest first. What changed and why.
 
+## 2026-10-30: Deploy on every push
+
+Deploy on push. `.github/workflows/deploy.yml` now also runs on every push
+to `main`, except pushes that only change `.md` files; `workflow_dispatch`
+still works for deploying by hand. A `concurrency` group queues a second
+deploy behind a running one instead of uploading in parallel.
+`actions/checkout` and `actions/setup-node` went from v4 to v6 (Node 20
+runtime was deprecated, every run printed a warning) and the build runs
+on Node 24. New `scripts/watch-deploy.sh` waits for the deploy a push
+started; `push-deploy.sh` and `archive-p-d.sh` use it instead of
+`deploy.sh`, which would now start a second, duplicate deploy.
+
 ## 2026-10-19: Cycle is o-i-a
 
 User correction: the cycle should go o i a o i a, not o i i a. Dropped
